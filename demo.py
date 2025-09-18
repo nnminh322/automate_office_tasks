@@ -43,7 +43,6 @@ if header_row_idx is None:
         f"Biến template: {sorted(template_keys)}"
     )
 
-# 4) Chuẩn hoá hiển thị cell (giờ/ngày/số…), để render đẹp
 def format_cell(v):
     if pd.isna(v):
         return ""
