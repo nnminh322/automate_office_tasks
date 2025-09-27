@@ -3,8 +3,8 @@ import pandas as pd
 from docxtpl import DocxTemplate
 import datetime as dt
 
-EXCEL_FILE   = Path("./data_sample.xlsx")
-WORD_TEMPLATE= Path("./template_sample.docx")
+EXCEL_FILE   = Path("./chidinhthau_data_sample.xlsx")
+WORD_TEMPLATE= Path("./chidinhthau_template.docx")
 OUTPUT_ROOT  = Path("./output")
 OUTPUT_ROOT.mkdir(exist_ok=True)
 
