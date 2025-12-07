@@ -10,7 +10,6 @@ from utils import (
     extract_records_from_header_table,
 )
 
-
 def load_template_keys(template_path: Path):
     doc_probe = DocxTemplate(str(template_path))
     template_keys = set(doc_probe.get_undeclared_template_variables({}))
@@ -18,12 +17,7 @@ def load_template_keys(template_path: Path):
         raise ValueError("Template không có biến Jinja2 ({{...}}).")
     return template_keys
 
-
-def render_documents(
-    records,
-    template_path: Path,
-    output_root: Path,
-):
+def render_documents(records, template_path: Path, output_root: Path, replace: bool = True):
     output_root.mkdir(parents=True, exist_ok=True)
     template_keys = load_template_keys(template_path)
 
@@ -34,15 +28,14 @@ def render_documents(
 
     for idx, rec in enumerate(records, start=1):
         context = {k: rec.get(k, "") for k in template_keys}
-
         out_file = output_root / f"{idx:0{pad}d}.docx"
+
+        if out_file.exists() and not replace:
+            raise FileExistsError(f"File đã tồn tại và replace=false: {out_file}")
+
         doc = DocxTemplate(str(template_path))
         doc.render(context)
         doc.save(str(out_file))
-        print(f"Đã tạo: {out_file}")
-
-    print(f"\nHoàn tất! Đã tạo {len(records)} file .docx trong thư mục '{output_root}'.")
-
 
 def generate_documents(
     doc_type: str,
@@ -50,7 +43,7 @@ def generate_documents(
     template_file: Path,
     output_dir: Path,
     sheet_name: str | None = None,
-):
+    replace: bool = True):
     """
     main_pipeline
     """
@@ -81,11 +74,8 @@ def generate_documents(
     else:
         raise ValueError(f"doc_type không hỗ trợ: {doc_type}")
 
-    render_documents(
-        records=records,
-        template_path=template_file,
-        output_root=output_dir,
-    )
+    render_documents(records, template_file, output_dir, replace=replace)
+    return len(records)
 
 
 def parse_args():
@@ -96,9 +86,8 @@ def parse_args():
         "--doc-type",
         required=True,
         choices=[
-            "goi_thau_khlcnt",   # Excel KHLCNT phức tạp
-            "header_table",      # Excel simple, header = tên biến
-            # sau này thêm ở đây
+            "goi_thau_khlcnt",   
+            "header_table",      
         ],
         help="Loại văn bản cần sinh.",
     )
@@ -124,6 +113,15 @@ def parse_args():
     )
     return parser.parse_args()
 
+
+def parse_args():
+    p = argparse.ArgumentParser(...)
+    p.add_argument("--doc-type", choices=["goi_thau_khlcnt","header_table"], default="goi_thau_khlcnt")
+    p.add_argument("--excel-file", default="/Users/nhatminhnguyen/Desktop/TuHoc/automate_office_tasks/1.1. Phu luc KHLCNT.xlsx")
+    p.add_argument("--template-file", default="/Users/nhatminhnguyen/Desktop/TuHoc/automate_office_tasks/QUYET DINH CHI DINH THAU.docx")
+    p.add_argument("--output-dir", default="/Users/nhatminhnguyen/Desktop/TuHoc/automate_office_tasks/output")
+    p.add_argument("--sheet-name", default="Bảng 3")
+    return p.parse_args()
 
 if __name__ == "__main__":
     args = parse_args()

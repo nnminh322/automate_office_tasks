@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trình Tạo Tài Liệu Hàng Loạt</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
+
+  <!-- MAIN VIEW -->
+  <div id="main-view" class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
+    <form id="main-form">
+      <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Trình Tạo Tài Liệu Hàng Loạt</h1>
+
+      <div class="space-y-6">
+
+        <!-- 1) EXCEL (đã bỏ <input type="file"> vì browser không có .path) -->
+        <div>
+          <label for="excel-path" class="block text-sm font-medium text-gray-700 mb-1">
+            1. Chọn File Excel Nguồn (.xlsx, .xls)
+          </label>
+          <div class="mt-1 flex rounded-lg shadow-sm">
+            <input id="excel-path" type="text" readonly required
+                   placeholder="Chưa chọn file Excel..."
+                   class="block w-full flex-1 rounded-none rounded-l-lg border-gray-300 bg-gray-100 focus:border-blue-500 focus:ring-blue-500">
+            <button id="browse-excel-btn" type="button"
+                    class="inline-flex items-center rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              Browse...
+            </button>
+          </div>
+          <p class="mt-2 text-xs text-gray-500">
+            Ghi chú: UI này cần chạy trong pywebview để lấy đường dẫn file.
+          </p>
+        </div>
+
+        <!-- 2) SHEET -->
+        <div>
+          <label for="sheet-select" class="block text-sm font-medium text-gray-700 mb-1">
+            2. Chọn Sheet
+          </label>
+          <select id="sheet-select" disabled required
+                  class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500
+                         disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+            <option value="">Vui lòng chọn file trước</option>
+          </select>
+        </div>
+
+        <!-- 3) TEMPLATE (.docx) -->
+        <div>
+          <label for="template-path" class="block text-sm font-medium text-gray-700 mb-1">
+            3. Chọn File Template (.docx)
+          </label>
+          <div class="mt-1 flex rounded-lg shadow-sm">
+            <input id="template-path" type="text" readonly placeholder="Chưa chọn file template..." required
+                   class="block w-full flex-1 rounded-none rounded-l-lg border-gray-300 bg-gray-100 focus:border-blue-500 focus:ring-blue-500">
+            <button id="browse-template-btn" type="button"
+                    class="inline-flex items-center rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              Browse...
+            </button>
+          </div>
+        </div>
+
+        <!-- 4) OUTPUT FOLDER -->
+        <div>
+          <label for="folder-path" class="block text-sm font-medium text-gray-700 mb-1">
+            4. Chọn Thư Mục Lưu
+          </label>
+          <div class="mt-1 flex rounded-lg shadow-sm">
+            <input id="folder-path" type="text" readonly placeholder="Chưa chọn thư mục..." required
+                   class="block w-full flex-1 rounded-none rounded-l-lg border-gray-300 bg-gray-100 focus:border-blue-500 focus:ring-blue-500">
+            <button id="browse-folder-btn" type="button"
+                    class="inline-flex items-center rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+              Browse...
+            </button>
+          </div>
+        </div>
+
+        <!-- 5) REPLACE -->
+        <div class="flex items-center">
+          <input id="replace-checkbox" type="checkbox"
+                 class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+          <label for="replace-checkbox" class="ml-2 block text-sm text-gray-900">
+            Ghi đè (replace) nếu file đã tồn tại?
+          </label>
+        </div>
+      </div>
+
+      <div id="status-message" class="mt-6 p-4 rounded-lg bg-gray-50 text-gray-700 hidden"></div>
+
+      <div class="mt-8 flex justify-end space-x-4">
+        <button id="cancel-btn" type="button"
+                class="rounded-lg border border-gray-300 bg-white px-6 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          Cancel
+        </button>
+        <button id="action-btn" type="submit"
+                class="rounded-lg border border-transparent bg-blue-600 px-6 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          Action
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- SUCCESS VIEW -->
+  <div id="success-view" class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg text-center hidden">
+    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+      <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+      </svg>
+    </div>
+    <h2 class="mt-4 text-xl font-bold text-gray-800">Thành công!</h2>
+    <p id="success-message" class="mt-2 text-gray-600">Tác vụ đã hoàn thành.</p>
+    <button id="back-to-main-success" type="button"
+            class="mt-6 rounded-lg border border-transparent bg-blue-600 px-6 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+      Quay lại
+    </button>
+  </div>
+
+  <!-- ERROR VIEW -->
+  <div id="error-view" class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg hidden">
+    <div class="text-center">
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+        <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </div>
+      <h2 class="mt-4 text-xl font-bold text-gray-800">Đã xảy ra lỗi</h2>
+    </div>
+    <p class="mt-4 text-sm font-medium text-gray-700">Chi tiết lỗi (Exception):</p>
+    <div class="mt-2 h-40 overflow-y-auto rounded-lg bg-gray-100 p-3">
+      <pre id="error-message" class="text-sm text-red-700" style="white-space: pre-wrap; word-wrap: break-word;">
+(Chi tiết exception từ Python sẽ được hiển thị ở đây)
+      </pre>
+    </div>
+    <button id="back-to-main-error" type="button"
+            class="mt-6 w-full rounded-lg border border-transparent bg-blue-600 px-6 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+      Quay lại
+    </button>
+  </div>
+
+  <script>
+    // --- DOM ---
+    const mainView = document.getElementById('main-view');
+    const successView = document.getElementById('success-view');
+    const errorView = document.getElementById('error-view');
+
+    const excelPath = document.getElementById('excel-path');
+    const browseExcelBtn = document.getElementById('browse-excel-btn');
+
+    const sheetSelect = document.getElementById('sheet-select');
+
+    const folderBtn = document.getElementById('browse-folder-btn');
+    const folderPath = document.getElementById('folder-path');
+
+    const templateBtn = document.getElementById('browse-template-btn');
+    const templatePath = document.getElementById('template-path');
+
+    const form = document.getElementById('main-form');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const statusMessage = document.getElementById('status-message');
+    const replaceCheckbox = document.getElementById('replace-checkbox');
+
+    const successMessage = document.getElementById('success-message');
+    const errorMessage = document.getElementById('error-message');
+    const backToMainSuccessBtn = document.getElementById('back-to-main-success');
+    const backToMainErrorBtn = document.getElementById('back-to-main-error');
+
+    // --- View navigation ---
+    function showMainView() {
+      mainView.classList.remove('hidden');
+      successView.classList.add('hidden');
+      errorView.classList.add('hidden');
+
+      form.reset();
+      excelPath.value = '';
+      templatePath.value = '';
+      folderPath.value = '';
+
+      sheetSelect.innerHTML = '<option value="">Vui lòng chọn file trước</option>';
+      sheetSelect.disabled = true;
+
+      statusMessage.classList.add('hidden');
+      statusMessage.textContent = '';
+    }
+
+    function showSuccessView(message) {
+      successMessage.textContent = message || 'Tác vụ đã hoàn thành.';
+      mainView.classList.add('hidden');
+      successView.classList.remove('hidden');
+      errorView.classList.add('hidden');
+    }
+
+    function showErrorView(error) {
+      errorMessage.textContent = String(error || 'Unknown error');
+      mainView.classList.add('hidden');
+      successView.classList.add('hidden');
+      errorView.classList.remove('hidden');
+    }
+
+    backToMainSuccessBtn.addEventListener('click', showMainView);
+    backToMainErrorBtn.addEventListener('click', showMainView);
+
+    // --- Status banner ---
+    function showStatus(message, type = 'info') {
+      statusMessage.textContent = message;
+      statusMessage.classList.remove(
+        'hidden',
+        'bg-blue-50','text-blue-800',
+        'bg-green-50','text-green-800',
+        'bg-yellow-50','text-yellow-800',
+        'bg-red-50','text-red-800'
+      );
+
+      if (type === 'success') statusMessage.classList.add('bg-green-50','text-green-800');
+      else if (type === 'warning') statusMessage.classList.add('bg-yellow-50','text-yellow-800');
+      else if (type === 'error') statusMessage.classList.add('bg-red-50','text-red-800');
+      else statusMessage.classList.add('bg-blue-50','text-blue-800');
+    }
+
+    function hasPywebview() {
+      return !!(window.pywebview && window.pywebview.api);
+    }
+
+    // --- Excel browse + sheet loading ---
+    browseExcelBtn.addEventListener('click', () => {
+      if (!hasPywebview()) {
+        showStatus('UI này cần chạy trong pywebview (python app.py). Không thể lấy path trong browser.', 'error');
+        return;
+      }
+
+      window.pywebview.api.open_excel_file_dialog()
+        .then(path => {
+          if (!path) {
+            showStatus('Đã hủy chọn file Excel.', 'warning');
+            return null;
+          }
+          excelPath.value = path;
+          showStatus('Đang tải danh sách sheet...', 'info');
+          return window.pywebview.api.get_sheet_names(path);
+        })
+        .then(sheets => {
+          if (!sheets) return;
+          sheetSelect.innerHTML = '';
+          sheets.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            sheetSelect.appendChild(option);
+          });
+          sheetSelect.disabled = false;
+          showStatus('Đã tải xong danh sách sheet.', 'success');
+        })
+        .catch(err => {
+          showStatus(String(err), 'error');
+        });
+    });
+
+    // --- Template browse ---
+    templateBtn.addEventListener('click', () => {
+      if (!hasPywebview()) {
+        showStatus('UI này cần chạy trong pywebview (python app.py).', 'error');
+        return;
+      }
+      window.pywebview.api.open_template_file_dialog()
+        .then(path => {
+          if (!path) {
+            showStatus('Đã hủy chọn file template.', 'warning');
+            return;
+          }
+          templatePath.value = path;
+          showStatus('Đã chọn file template.', 'success');
+        })
+        .catch(err => showStatus(String(err), 'error'));
+    });
+
+    // --- Folder browse ---
+    folderBtn.addEventListener('click', () => {
+      if (!hasPywebview()) {
+        showStatus('UI này cần chạy trong pywebview (python app.py).', 'error');
+        return;
+      }
+      window.pywebview.api.open_folder_dialog()
+        .then(path => {
+          if (!path) {
+            showStatus('Đã hủy chọn thư mục.', 'warning');
+            return;
+          }
+          folderPath.value = path;
+          showStatus('Đã chọn thư mục lưu.', 'success');
+        })
+        .catch(err => showStatus(String(err), 'error'));
+    });
+
+    // --- Submit (run Python) ---
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      if (!hasPywebview()) {
+        showStatus('Không thể chạy pipeline trong browser. Hãy chạy bằng pywebview.', 'error');
+        return;
+      }
+
+      const formData = {
+        filePath: excelPath.value,
+        sheetName: sheetSelect.value,
+        templatePath: templatePath.value,
+        outputFolder: folderPath.value,
+        replace: replaceCheckbox.checked
+      };
+
+      if (!formData.filePath || !formData.sheetName || !formData.templatePath || !formData.outputFolder) {
+        showStatus('Thiếu thông tin: Excel / Sheet / Template / Output.', 'error');
+        return;
+      }
+
+      showStatus('Đang thực hiện... ', 'info');
+
+      window.pywebview.api.run_process(formData)
+        .then(result => {
+          if (result && result.status === 'success') showSuccessView(result.message);
+          else showErrorView(result?.message || 'Unknown result');
+        })
+        .catch(err => showErrorView(err));
+    });
+
+    // --- Cancel ---
+    cancelBtn.addEventListener('click', () => {
+      showMainView();
+      showStatus('Đã reset form.', 'warning');
+    });
+  </script>
+</body>
+</html>
