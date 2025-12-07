@@ -5,7 +5,6 @@ import webview
 from main import generate_documents
 
 HTML_FILE = Path(__file__).parent / "./index.html"  # hoặc ui/index.html
-
 class Api:
     def open_excel_file_dialog(self):
         win = webview.windows[0]
@@ -13,13 +12,23 @@ class Api:
             webview.OPEN_DIALOG,
             allow_multiple=False,
             file_types=(
-                "Excel files (*.xlsx;*.xls)",  # label
-                "*.xlsx",                      # pattern 1
-                "*.xls",                       # pattern 2
+                "Excel files (*.xlsx;*.xls)",
+                "All files (*.*)",
             ),
         )
         return r[0] if r else ""
 
+    def open_template_file_dialog(self):
+        win = webview.windows[0]
+        r = win.create_file_dialog(
+            webview.OPEN_DIALOG,
+            allow_multiple=False,
+            file_types=(
+                "Word template (*.docx)",
+                "All files (*.*)",
+            ),
+        )
+        return r[0] if r else ""
 
     def get_sheet_names(self, excel_path: str):
         if not excel_path:
@@ -27,14 +36,6 @@ class Api:
         xls = pd.ExcelFile(excel_path)
         return list(xls.sheet_names)
 
-    def open_template_file_dialog(self):
-        win = webview.windows[0]
-        r = win.create_file_dialog(
-            webview.OPEN_DIALOG,
-            allow_multiple=False,
-            file_types=("Word template (*.docx)", "*.docx"),
-        )
-        return r[0] if r else ""
 
     def open_folder_dialog(self):
         win = webview.windows[0]
